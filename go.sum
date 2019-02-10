@@ -1,0 +1,17 @@
+github.com/kr/pretty v0.1.0 h1:L/CwN0zerZDmRFUapSPitk6f+Q3+0za1rQkzVuMiMFI=
+github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
+github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
+github.com/kr/text v0.1.0 h1:45sCR5RtlFHMR4UwH9sdQ5TC8v0qDQCHnXt+kaKSTVE=
+github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
+github.com/loggo/loggo v0.0.0-20140128045037-89458b4dc996 h1:8tJo018VhDfSHr7M4S6Bf6yeo82Ph/u0rBf5/pj4HkY=
+github.com/loggo/loggo v0.0.0-20140128045037-89458b4dc996/go.mod h1:PRnqf3nSkscHMGZHWt+LZcUXQ7lYNL1vck9j3KZyLlU=
+github.com/rogpeppe/go-internal v1.2.0 h1:+M5MI5gtuXGKG/iL6F+uiaeGIgi63Z9c1BBefPbsnTc=
+github.com/rogpeppe/go-internal v1.2.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
+gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 h1:qIbj1fsPNlZgppZ+VLlY7N33q108Sa+fhmuc+sWQYwY=
+gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/errgo.v2 v2.1.0 h1:0vLT13EuvQ0hNvakwLuFZ/jYrLp5F3kcWHXdRggjCE8=
+gopkg.in/errgo.v2 v2.1.0/go.mod h1:hNsd1EY+bozCKY1Ytp96fpM3vjJbqLJn88ws8XvfDNI=
+launchpad.net/errgo v0.0.0-20140324230230-000000000012 h1:Suydp3CtWqMp+SnFYlgjq3G+bXmzbmsJYKM97p2Asvs=
+launchpad.net/errgo v0.0.0-20140324230230-000000000012/go.mod h1:/Q/8p1WJm7bqlUdurnglfjsfFTDBdNlFObTnL8QNkZo=
+launchpad.net/gocheck v0.0.0-20140225173054-000000000087 h1:Izowp2XBH6Ya6rv+hqbceQyw/gSGoXfH/UPoTGduL54=
+launchpad.net/gocheck v0.0.0-20140225173054-000000000087/go.mod h1:hj7XX3B/0A+80Vse0e+BUHsHMTEhd0O4cpUHr/e/BUM=

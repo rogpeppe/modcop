@@ -1,0 +1,100 @@
+deps -test .
+cmp stdout expect-test
+deps .
+cmp stdout expect-no-test
+
+-- expect-test --
+errors
+example.com/a
+fmt
+io
+math
+math/bits
+os
+reflect
+runtime
+sort
+strconv
+sync
+sync/atomic
+syscall
+time
+unicode
+unicode/utf8
+test bufio
+test bytes
+test compress/flate
+test compress/gzip
+test context
+test encoding/binary
+test flag
+test hash
+test hash/crc32
+test io/ioutil
+test path/filepath
+test regexp
+test regexp/syntax
+test runtime/debug
+test runtime/pprof
+test runtime/trace
+test strings
+test testing
+test text/tabwriter
+-- expect-no-test --
+errors
+example.com/a
+fmt
+io
+math
+math/bits
+os
+reflect
+runtime
+sort
+strconv
+sync
+sync/atomic
+syscall
+time
+unicode
+unicode/utf8
+-- go.mod --
+module m
+
+require (
+	example.com/a v1.0.0
+)
+
+-- main.go --
+package main
+import "example.com/a"
+
+func main() {
+	a.A()
+}
+-- main_test.go --
+package main_test
+import "testing"
+
+func TestMain(t *testing.T) {
+}
+-- .gomodproxy/example.com_a_v1.0.0/.mod --
+module example.com/a
+
+-- .gomodproxy/example.com_a_v1.0.0/.info --
+{"Version":"v1.0.0","Time":"2018-10-22T18:45:39Z"}
+
+-- .gomodproxy/example.com_a_v1.0.0/a.go --
+package a
+import "fmt"
+
+func A() {
+	fmt.Println("hello, world")
+}
+-- .gomodproxy/example.com_a_v1.0.0/a_test.go --
+package a
+import "testing"
+
+func TestA(t *testing.T) {
+	A()
+}
