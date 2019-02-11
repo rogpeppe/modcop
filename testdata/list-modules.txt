@@ -1,12 +1,22 @@
-modcop list -test
+modcop list -m -test
 cmp stdout expect-test
-modcop list
+modcop list -m
+cmp stdout expect-no-test
+modcop list -m -testonly
+
+# using . should be the same as specifying no args
+modcop list -m -test .
 cmp stdout expect-test
 
 -- expect-test --
-build errors
-build example.com/a
-build fmt
+example.com/a/...
+std
+stdtest
+-- expect-no-test --
+example.com/a/...
+std
+-- expect-testonly --
+stdtest
 -- go.mod --
 module m
 
@@ -21,22 +31,27 @@ import "example.com/a"
 func main() {
 	a.A()
 }
+-- main_test.go --
+package main
+import "testing"
+
+func TestMain(t *testing.T) {
+}
 -- .gomodproxy/example.com_a_v1.0.0/.mod --
 module example.com/a
 
 -- .gomodproxy/example.com_a_v1.0.0/.info --
 {"Version":"v1.0.0","Time":"2018-10-22T18:45:39Z"}
 
+-- .gomodproxy/example.com_a_v1.0.0/go.mod --
+module example.com/a
+
 -- .gomodproxy/example.com_a_v1.0.0/a.go --
 package a
-import (
-	"errors"
-	"fmt"
-)
+import "fmt"
 
-func A() error {
+func A() {
 	fmt.Println("hello, world")
-	return errors.New("e")
 }
 -- .gomodproxy/example.com_a_v1.0.0/a_test.go --
 package a

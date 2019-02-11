@@ -1,22 +1,19 @@
-# check that external test deps are added correctly.
 modcop list -test
 cmp stdout expect-test
-
 modcop list
 cmp stdout expect-no-test
-
-# using . should be the same as specifying no args
-modcop list -test .
-cmp stdout expect-test
+modcop list -testonly
+cmp stdout expect-test-only
 
 -- expect-test --
-build example.com/a
-build fmt
-
-test testing
+example.com/a
+fmt
+testing
+-- expect-test-only --
+testing
 -- expect-no-test --
-build example.com/a
-build fmt
+example.com/a
+fmt
 -- go.mod --
 module m
 
@@ -32,7 +29,7 @@ func main() {
 	a.A()
 }
 -- main_test.go --
-package main_test
+package main
 import "testing"
 
 func TestMain(t *testing.T) {
