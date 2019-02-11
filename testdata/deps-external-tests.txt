@@ -1,16 +1,22 @@
 # check that external test deps are added correctly.
-deps -test .
+modcop list -test
 cmp stdout expect-test
-deps .
+
+modcop list
 cmp stdout expect-no-test
 
+# using . should be the same as specifying no args
+modcop list -test .
+cmp stdout expect-test
+
 -- expect-test --
-example.com/a
-fmt
+build example.com/a
+build fmt
+
 test testing
 -- expect-no-test --
-example.com/a
-fmt
+build example.com/a
+build fmt
 -- go.mod --
 module m
 
