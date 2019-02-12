@@ -10,7 +10,7 @@ import (
 	"github.com/rogpeppe/go-internal/goproxytest"
 	"github.com/rogpeppe/go-internal/gotooltest"
 	"github.com/rogpeppe/go-internal/testscript"
-	"launchpad.net/errgo/errors"
+	"gopkg.in/errgo.v2/fmt/errors"
 )
 
 func TestMain(m *testing.M) {
