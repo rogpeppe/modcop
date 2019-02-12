@@ -8,28 +8,43 @@ import (
 	"gopkg.in/errgo.v2/fmt/errors"
 )
 
+type depCtx struct {
+	pkgs      map[string]*goListPackage
+	withTests bool
+
+	// testOnly holds a map from package import path to whether that package
+	// is used for testing only (true) or just the build (false).
+	testOnly map[string]bool
+
+	// When true, standard library dependencies will be
+	// traversed recursively too.
+	addStandard bool
+}
+
 func deps(pkgNames []string, withTests bool) (build, test []*goListPackage, err error) {
 	pkgs, err := goListDeps(pkgNames, withTests)
 	if err != nil {
 		return nil, nil, errors.Wrap(err)
 	}
-	pkgMap := make(map[string]*goListPackage)
-	for _, p := range pkgs {
-		pkgMap[p.ImportPath] = p
+	ctx := &depCtx{
+		withTests: withTests,
+		pkgs:      make(map[string]*goListPackage),
+		testOnly:  make(map[string]bool),
 	}
-	// testOnly holds a map from package import path to whether that package
-	// is used for testing only (true) or just the build (false).
-	testOnly := make(map[string]bool)
 	for _, p := range pkgs {
-		if !p.DepOnly {
-			if err := addDeps(p, pkgMap, isTestPackage(p), true, withTests, testOnly); err != nil {
+		ctx.pkgs[p.ImportPath] = p
+	}
+
+	for _, p := range pkgs {
+		if !p.DepOnly && !isTestGeneratedPackage(p) {
+			if err := ctx.addDeps(p, isTestGeneratedPackage(p), true); err != nil {
 				return nil, nil, err
 			}
 		}
 	}
-	for ipName, isTest := range testOnly {
-		p := pkgMap[ipName]
-		if !p.DepOnly {
+	for ipName, isTest := range ctx.testOnly {
+		p := ctx.pkgs[ipName]
+		if !p.DepOnly || isTestGeneratedPackage(p) {
 			// It's one of the initial packages, so we don't count it
 			// as a dependency.
 			continue
@@ -53,7 +68,10 @@ func deps(pkgNames []string, withTests bool) (build, test []*goListPackage, err 
 	return build, test, nil
 }
 
-func isTestPackage(p *goListPackage) bool {
+// isTestGeneratedPackage reports whether the given package
+// is generated just for tests and this should not be considered
+// part of the user-visible dependency tree.
+func isTestGeneratedPackage(p *goListPackage) bool {
 	if p.ForTest != "" {
 		return true
 	}
@@ -77,39 +95,41 @@ func isInternal(importPath string) bool {
 	return strings.HasPrefix(importPath, "internal/") || strings.Contains(importPath, "/internal/") || strings.HasSuffix(importPath, "/internal")
 }
 
-func addDeps(p *goListPackage, pkgs map[string]*goListPackage, isTest, isRoot bool, withTests bool, testOnly map[string]bool) error {
+func (ctx *depCtx) addDeps(p *goListPackage, isTest, isRoot bool) error {
 	if isTest {
-		if _, ok := testOnly[p.ImportPath]; ok {
+		if _, ok := ctx.testOnly[p.ImportPath]; ok {
 			// It's already present as a build or test dependency.
 			return nil
 		}
 	} else {
-		if isTest, ok := testOnly[p.ImportPath]; ok && !isTest {
+		if isTest, ok := ctx.testOnly[p.ImportPath]; ok && !isTest {
 			// It's already present as a build dependency.
 			return nil
 		}
 	}
-	testOnly[p.ImportPath] = isTest
+	ctx.testOnly[p.ImportPath] = isTest
 	addImports := func(ipNames []string, isTest bool) error {
 		for _, ipName := range ipNames {
-			if ipName == "unsafe" && p.Standard {
-				// The standard library is always allowed access to unsafe.
-				continue
-			}
-			ip := pkgs[ipName]
+			ip := ctx.pkgs[ipName]
 			if ip == nil {
 				return errors.Notef(nil, nil, "cannot find package entry for %v", ipName)
 			}
-			if err := addDeps(ip, pkgs, isTest, false, withTests, testOnly); err != nil {
+			if err := ctx.addDeps(ip, isTest, false); err != nil {
 				return errors.Wrap(err)
 			}
 		}
 		return nil
 	}
+	// Avoid traversing further into the standard library than explicit
+	// dependencies because we want to be able to use the same go.dep
+	// file with multiple Go versions.
+	if p.Standard && !ctx.addStandard {
+		return nil
+	}
 	if err := addImports(p.Imports, isTest); err != nil {
 		return errors.Wrap(err)
 	}
-	if withTests && isRoot {
+	if ctx.withTests && isRoot {
 		if err := addImports(p.TestImports, true); err != nil {
 			return errors.Wrap(err)
 		}
