@@ -7,20 +7,6 @@ cmp stdout expect-test
 errors
 example.com/a
 fmt
-io
-math
-math/bits
-os
-reflect
-runtime
-sort
-strconv
-sync
-sync/atomic
-syscall
-time
-unicode
-unicode/utf8
 -- go.mod --
 module m
 
@@ -43,10 +29,14 @@ module example.com/a
 
 -- .gomodproxy/example.com_a_v1.0.0/a.go --
 package a
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
-func A() {
+func A() error {
 	fmt.Println("hello, world")
+	return errors.New("e")
 }
 -- .gomodproxy/example.com_a_v1.0.0/a_test.go --
 package a
