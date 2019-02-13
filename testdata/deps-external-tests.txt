@@ -1,3 +1,4 @@
+# check that external test deps are added correctly.
 deps -test .
 cmp stdout expect-test
 deps .
@@ -35,6 +36,9 @@ module example.com/a
 
 -- .gomodproxy/example.com_a_v1.0.0/.info --
 {"Version":"v1.0.0","Time":"2018-10-22T18:45:39Z"}
+
+-- .gomodproxy/example.com_a_v1.0.0/go.mod --
+module example.com/a
 
 -- .gomodproxy/example.com_a_v1.0.0/a.go --
 package a

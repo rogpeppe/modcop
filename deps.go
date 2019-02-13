@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -12,15 +13,26 @@ type depCtx struct {
 	pkgs      map[string]*goListPackage
 	withTests bool
 
-	// testOnly holds a map from package import path to whether that package
-	// is used for testing only (true) or just the build (false).
-	testOnly map[string]bool
+	// deps holds dependency map of all the packages
+	// found so far.
+	deps dependencyMap
 
 	// When true, standard library dependencies will be
 	// traversed recursively too.
 	addStandard bool
 }
 
+// deps returns the list of build and test-only dependencies of the
+// packages with the given import paths. Paths may contain pattern
+// wildcards as supported by the Go tool.
+//
+// The full dependency graph is pruned by omitting any dependencies of
+// external test dependencies. The dependency traversal is also bounded
+// by the standard library. An entry will returned for each standard
+// library package directly referred to from non-standard-library code -
+// dependencies are not traversed further than that.
+//
+// The packages directly matched by pkgNames will not themselves be added.
 func deps(pkgNames []string, withTests bool) (build, test []*goListPackage, err error) {
 	pkgs, err := goListDeps(pkgNames, withTests)
 	if err != nil {
@@ -29,12 +41,15 @@ func deps(pkgNames []string, withTests bool) (build, test []*goListPackage, err 
 	ctx := &depCtx{
 		withTests: withTests,
 		pkgs:      make(map[string]*goListPackage),
-		testOnly:  make(map[string]bool),
+		deps:      make(dependencyMap),
 	}
+	// Add all packages to the packages map.
 	for _, p := range pkgs {
 		ctx.pkgs[p.ImportPath] = p
 	}
 
+	// Find the set of dependencies of all listed packages
+	// and add them to ctx.testOnly.
 	for _, p := range pkgs {
 		if !p.DepOnly && !isTestGeneratedPackage(p) {
 			if err := ctx.addDeps(p, isTestGeneratedPackage(p), true); err != nil {
@@ -42,7 +57,9 @@ func deps(pkgNames []string, withTests bool) (build, test []*goListPackage, err 
 			}
 		}
 	}
-	for ipName, isTest := range ctx.testOnly {
+	// add the dependencies we've found to the appropriate
+	// list for returning.
+	for ipName, isTest := range ctx.deps {
 		p := ctx.pkgs[ipName]
 		if !p.DepOnly || isTestGeneratedPackage(p) {
 			// It's one of the initial packages, so we don't count it
@@ -95,19 +112,26 @@ func isInternal(importPath string) bool {
 	return strings.HasPrefix(importPath, "internal/") || strings.Contains(importPath, "/internal/") || strings.HasSuffix(importPath, "/internal")
 }
 
+// addDeps recursively adds an entry for the given package and all its dependencies
+// to ctx.testOnly. isTest holds whether the package has been reached by test
+// dependencies only; isRoot holds whether the dependency is a top level
+// dependency passed to addDeps.
 func (ctx *depCtx) addDeps(p *goListPackage, isTest, isRoot bool) error {
-	if isTest {
-		if _, ok := ctx.testOnly[p.ImportPath]; ok {
-			// It's already present as a build or test dependency.
-			return nil
-		}
-	} else {
-		if isTest, ok := ctx.testOnly[p.ImportPath]; ok && !isTest {
-			// It's already present as a build dependency.
-			return nil
-		}
+	if p.Module != nil && p.Module.Replace != nil {
+		// The module for the current package has been
+		// replaced. We add dependencies for both the
+		// original module and its replacement because
+		// both are applicable in different situations.
+		// TODO implement this.
+		// We'll need to run go list twice, once ignoring
+		// replacements; and we'll need to apply the replace statement
+		// when we add to the dependency list.
+		return fmt.Errorf("replaced modules not yet supported")
 	}
-	ctx.testOnly[p.ImportPath] = isTest
+	changed := ctx.deps.markVisited(p.ImportPath, isTest)
+	if !changed {
+		return nil
+	}
 	addImports := func(ipNames []string, isTest bool) error {
 		for _, ipName := range ipNames {
 			ip := ctx.pkgs[ipName]
@@ -138,4 +162,37 @@ func (ctx *depCtx) addDeps(p *goListPackage, isTest, isRoot bool) error {
 		}
 	}
 	return nil
+}
+
+// A dependency map is used to represent a set
+// of package dependencies keyed by package name.
+//
+// Each entry represents a dependency; true for
+// test-only dependencies and false for build
+// dependencies (they might also be test dependencies,
+// but they're not exclusively test dependencies)
+type dependencyMap map[string]bool
+
+// isTestOnly reports whether the given importPath has
+// been marked as a test-only dependency.
+func (m dependencyMap) isTestOnly(importPath string) bool {
+	return m[importPath]
+}
+
+// markVisited marks that the given package has been visited as
+// a test dependency. It reports whether the visited entry has
+// changed.
+func (m dependencyMap) markVisited(importPath string, isTest bool) (changed bool) {
+	testOnly, ok := m[importPath]
+	switch {
+	case !ok:
+		m[importPath] = isTest
+		return true
+	case testOnly && !isTest:
+		// It was only in tests but now it's moved
+		// to the inner circle.
+		m[importPath] = false
+		return true
+	}
+	return false
 }
