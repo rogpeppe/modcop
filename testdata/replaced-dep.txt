@@ -1,0 +1,99 @@
+# check that a replaced dependency still counts.
+# We test this by checking that the extra dependency in
+# the replaced package is reflected in the result
+# and that the original dependency's aren't seen there.
+! deps .
+stderr 'error: replaced modules not yet supported'
+
+-- expect --
+errors
+example.com/a
+fmt
+net/http
+-- expect-test --
+errors
+example.com/a
+fmt
+net/http
+test testing
+-- go.mod --
+module m
+
+require example.com/a v1.0.0
+replace example.com/a => replace.com/a v1.0.0
+-- main.go --
+package main
+import "example.com/a"
+
+func main() {
+	a.A()
+}
+
+-- main_test.go --
+package main
+import "testing"
+
+func TestMain(t *testing.T) {
+}
+
+-- .gomodproxy/replace.com_a_v1.0.0/.mod --
+module example.com/a
+
+-- .gomodproxy/replace.com_a_v1.0.0/.info --
+{"Version":"v1.0.0","Time":"2018-10-22T18:45:39Z"}
+
+-- .gomodproxy/replace.com_a_v1.0.0/go.mod --
+module example.com/a
+
+-- .gomodproxy/replace.com_a_v1.0.0/a.go --
+package a
+import (
+	"errors"
+	"fmt"
+	_ "net/http"
+)
+
+func A() error {
+	fmt.Println("hello, world")
+	return errors.New("e")
+}
+-- .gomodproxy/replace.com_a_v1.0.0/a_test.go --
+package a
+import (
+	"testing"
+	_ "net/http/httptest"
+)
+
+func TestA(t *testing.T) {
+	A()
+}
+
+
+-- .gomodproxy/example.com_a_v1.0.0/.mod --
+module example.com/a
+
+-- .gomodproxy/example.com_a_v1.0.0/.info --
+{"Version":"v1.0.0","Time":"2018-10-22T18:45:39Z"}
+
+-- .gomodproxy/example.com_a_v1.0.0/go.mod --
+module example.com/a
+
+-- .gomodproxy/example.com_a_v1.0.0/a.go --
+package a
+import (
+	"errors"
+	"fmt"
+	_ "math/big"
+)
+
+func A() error {
+	fmt.Println("hello, world")
+	return errors.New("e")
+}
+-- .gomodproxy/example.com_a_v1.0.0/a_test.go --
+package a
+import "testing"
+
+func TestA(t *testing.T) {
+	A()
+}
