@@ -2,20 +2,8 @@
 # We test this by checking that the extra dependency in
 # the replaced package is reflected in the result
 # and that the original dependency's aren't seen there.
-! deps .
-stderr 'error: replaced modules not yet supported'
-
--- expect --
-errors
-example.com/a
-fmt
-net/http
--- expect-test --
-errors
-example.com/a
-fmt
-net/http
-test testing
+! modcop list
+stderr 'replaced modules not yet supported'
 -- go.mod --
 module m
 

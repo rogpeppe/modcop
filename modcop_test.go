@@ -1,8 +1,6 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -15,29 +13,8 @@ import (
 
 func TestMain(m *testing.M) {
 	os.Exit(testscript.RunMain(m, map[string]func() int{
-		"deps": depsMain,
+		"modcop": main1,
 	}))
-}
-
-func depsMain() int {
-	testFlag := flag.Bool("test", false, "include test deps")
-	flag.Parse()
-	withTests := false
-	if *testFlag {
-		withTests = true
-	}
-	build, test, err := deps(flag.Args(), withTests)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v", err)
-		return 1
-	}
-	for _, p := range build {
-		fmt.Println(p.ImportPath)
-	}
-	for _, p := range test {
-		fmt.Println("test", p.ImportPath)
-	}
-	return 0
 }
 
 func TestScript(t *testing.T) {
