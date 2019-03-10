@@ -104,18 +104,23 @@ func isInternal(importPath string) bool {
 // dependencies only; isRoot holds whether the dependency is a top level
 // dependency passed to addDeps.
 func (ctx *depCtx) addDeps(p *goListPackage, isTest, isRoot bool) error {
+	importPath := p.ImportPath
 	if p.Module != nil && p.Module.Replace != nil {
 		// The module for the current package has been
-		// replaced. We add dependencies for both the
-		// original module and its replacement because
-		// both are applicable in different situations.
-		// TODO implement this.
-		// We'll need to run go list twice, once ignoring
-		// replacements; and we'll need to apply the replace statement
-		// when we add to the dependency list.
-		return fmt.Errorf("replaced modules not yet supported")
+		// replaced, so add it as a dependency using its replaced
+		// name rather than the import path that was used.
+		importPath1 := strings.TrimPrefix(importPath, p.Module.Path)
+		if len(importPath1) == len(importPath) {
+			return fmt.Errorf("package %s does not seem to be in module %s", importPath, p.Module.Path)
+		}
+		importPath = p.Module.Replace.Path + importPath1
+		if _, ok := ctx.pkgs[importPath]; !ok {
+			// There's no entry for the replacement package in the
+			// dependencies, so add it.
+			ctx.pkgs[importPath] = p
+		}
 	}
-	changed := ctx.deps.markVisited(p.ImportPath, isTest)
+	changed := ctx.deps.markVisited(importPath, isTest)
 	if !changed {
 		return nil
 	}
