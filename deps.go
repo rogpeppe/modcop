@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"gopkg.in/errgo.v2/fmt/errors"
@@ -33,7 +32,7 @@ type depCtx struct {
 // dependencies are not traversed further than that.
 //
 // The packages directly matched by pkgNames will not themselves be added.
-func deps(pkgNames []string, withTests bool) (build, test []*goListPackage, err error) {
+func deps(pkgNames []string, withTests bool) (map[string]*goListPackage, dependencyMap, error) {
 	pkgs, err := goListDeps(pkgNames, withTests)
 	if err != nil {
 		return nil, nil, errors.Wrap(err)
@@ -59,30 +58,18 @@ func deps(pkgNames []string, withTests bool) (build, test []*goListPackage, err 
 	}
 	// add the dependencies we've found to the appropriate
 	// list for returning.
-	for ipName, isTest := range ctx.deps {
+	for ipName := range ctx.deps {
 		p := ctx.pkgs[ipName]
-		if !p.DepOnly || isTestGeneratedPackage(p) {
-			// It's one of the initial packages, so we don't count it
-			// as a dependency.
-			continue
-		}
-		if isInternal(p.ImportPath) {
-			// It's an internal package - ignore it.
-			continue
-		}
-		if isTest {
-			test = append(test, p)
-		} else {
-			build = append(build, p)
+		if !p.DepOnly || isTestGeneratedPackage(p) || isInternal(p.ImportPath) {
+			// It's one of the initial package or it's
+			// an internal package we want to ignore,
+			// so remove it from the dependency graph.
+			// TODO perhaps leave internal imports
+			// from root modules alone?
+			delete(ctx.deps, ipName)
 		}
 	}
-	sort.Slice(build, func(i, j int) bool {
-		return build[i].ImportPath < build[j].ImportPath
-	})
-	sort.Slice(test, func(i, j int) bool {
-		return test[i].ImportPath < test[j].ImportPath
-	})
-	return build, test, nil
+	return ctx.pkgs, ctx.deps, nil
 }
 
 // isTestGeneratedPackage reports whether the given package

@@ -1,0 +1,66 @@
+# check that external test deps are added correctly.
+modcop list -test
+cmp stdout expect-test
+
+modcop list
+cmp stdout expect-no-test
+
+modcop list -testonly
+cmp stdout expect-test-only
+
+# using . should be the same as specifying no args
+modcop list -test .
+cmp stdout expect-test
+
+-- expect-test --
+example.com/a
+fmt
+testing
+-- expect-no-test --
+example.com/a
+fmt
+-- expect-test-only --
+testing
+-- go.mod --
+module m
+
+require (
+	example.com/a v1.0.0
+)
+
+-- main.go --
+package main
+import "example.com/a"
+
+func main() {
+	a.A()
+}
+-- main_test.go --
+package main_test
+import "testing"
+
+func TestMain(t *testing.T) {
+}
+-- .gomodproxy/example.com_a_v1.0.0/.mod --
+module example.com/a
+
+-- .gomodproxy/example.com_a_v1.0.0/.info --
+{"Version":"v1.0.0","Time":"2018-10-22T18:45:39Z"}
+
+-- .gomodproxy/example.com_a_v1.0.0/go.mod --
+module example.com/a
+
+-- .gomodproxy/example.com_a_v1.0.0/a.go --
+package a
+import "fmt"
+
+func A() {
+	fmt.Println("hello, world")
+}
+-- .gomodproxy/example.com_a_v1.0.0/a_test.go --
+package a
+import "testing"
+
+func TestA(t *testing.T) {
+	A()
+}

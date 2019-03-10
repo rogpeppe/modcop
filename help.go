@@ -27,7 +27,7 @@ func runHelp(args []string) int {
 			return 0
 		}
 	}
-	fmt.Fprintf(os.Stderr, "gohack help %s: unknown command\n", args[0])
+	fmt.Fprintf(os.Stderr, "modcop help %s: unknown command\n", args[0])
 	return 2
 }
 
@@ -39,14 +39,14 @@ func mainUsage(f io.Writer) {
 }
 
 var mainHelpTemplate = `
-The modcop command checks that module dependencies do not stray outside
+The modcop command checks that package dependencies do not stray outside
 well defined boundaries. It expects that the set of allowed dependencies
 will be checked in along with the source code, and modcop will be called
 as part of a CI check, so any addition to the set of allowed dependencies
 will need to be explicitly vetted as part of the code review process.
 
 The set of dependencies checked by modcop does not include dependencies
-of test code outside of the module being checked - it differs from
+of test code outside of the packages being checked - it differs from
 the module dependencies calculated by the go command in this respect.
 It also does not consider versions - if it is desired to police allowed
 module versions, a vetted Go proxy could be used.

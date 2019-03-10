@@ -17,10 +17,10 @@ type Command struct {
 	// The first word in the line is taken to be the command name.
 	UsageLine string
 
-	// Short is the short description shown in the 'gohack help' output.
+	// Short is the short description shown in the 'modcop help' output.
 	Short string
 
-	// Long is the long message shown in the 'gohack help <this-command>' output.
+	// Long is the long message shown in the 'modcop help <this-command>' output.
 	Long string
 
 	// Flag is a set of flags specific to this command.
@@ -33,5 +33,5 @@ func (c *Command) Name() string {
 
 func (c *Command) Usage() {
 	fmt.Fprintf(os.Stderr, "usage: %s\n", c.UsageLine)
-	fmt.Fprintf(os.Stderr, "Run 'gohack help %s' for details.\n", c.Name())
+	fmt.Fprintf(os.Stderr, "Run 'modcop help %s' for details.\n", c.Name())
 }
