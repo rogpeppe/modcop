@@ -48,8 +48,8 @@ modcop allow [-m] [packages]
 	
 	The special name "std" can be used to allow all packages
 	in the standard library that don't contain the string "test".
-	The special name "stdtest" can be used to allow all packages
-	in the standard library including test packages.
+	This excludes packages like testing and net/http/httptest,
+	which must be mentioned explicitly.
 
 	If no packages are specified, any dependencies that are
 	used but not mentioned in the go.dep file will be added,
@@ -87,7 +87,7 @@ modcop check [-with file]...
 			golang.org/x/tools/...
 		)
 		test (
-			stdtest
+			testing
 		)
 	
 	Then a call of "modcop check -with /org/go.dep" would fail if the package's
