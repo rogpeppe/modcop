@@ -11,12 +11,12 @@ cmp stdout expect-test
 -- expect-test --
 example.com/a/...
 std
-stdtest
+testing
 -- expect-no-test --
 example.com/a/...
 std
 -- expect-testonly --
-stdtest
+testing
 -- go.mod --
 module m
 

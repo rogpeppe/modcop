@@ -55,7 +55,9 @@ func cmdList(_ *Command, args []string) int {
 			var pattern string
 			switch {
 			case p.Standard && strings.Contains(ipName, "test"):
-				pattern = "stdtest"
+				// Test packages in the standard library do not have
+				// a module - they're mentioned explicitly instead.
+				pattern = ipName
 			case p.Standard:
 				pattern = "std"
 			default:
