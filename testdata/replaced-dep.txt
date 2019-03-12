@@ -2,8 +2,15 @@
 # We test this by checking that the extra dependency in
 # the replaced package is reflected in the result
 # and that the original dependency's aren't seen there.
-! modcop list
-stderr 'replaced modules not yet supported'
+modcop list -test
+cmp stdout expect
+
+-- expect --
+errors
+fmt
+net/http
+replace.com/a
+testing
 -- go.mod --
 module m
 
